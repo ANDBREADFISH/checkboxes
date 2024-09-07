@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+   <head><title>One Checkbox</title></head>
+   <body>
+        <h1>One Checkbox</h1>
+        
+        <form id="checkboxes">
+            <input name="0" type="checkbox">
+        </form>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io();
+
+            checkboxes = document.getElementById('checkboxes')
+
+            function changeBoard(location, state) {
+                console.log('Sending Data')
+                socket.emit('change', JSON.stringify({location: location, state: state}))
+            }
+
+            function updateBoard(location, state) {
+                const checkbox = checkboxes.elements[location]
+                if (checkbox && checkbox.type == 'checkbox') {
+                    checkbox.checked = state;
+                }
+            }
+
+            checkboxes.addEventListener('change', function(event) {
+                if (event.target.type === 'checkbox') {
+                    console.log(`Board changed: ${event.target.name} => ${event.target.checked}`)
+                    changeBoard(event.target.name, event.target.checked)
+                }
+            })
+
+            socket.on('change', (msg) => {
+                console.log('Received:', JSON.parse(msg))
+
+                let location = JSON.parse(msg).location
+                let state = JSON.parse(msg).state
+                updateBoard(location, state)
+            })
+        </script>
+    </body>
+</html>
