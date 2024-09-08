@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html>
-   <head><title>One Checkbox</title></head>
+   <head><title>Checkboxes</title></head>
    <body>
-        <h1>One Checkbox</h1>
+        <h1>Checkboxes</h1>
         
         <form id="checkboxes">
-            <input name="0" type="checkbox">
         </form>
 
         <script src="/socket.io/socket.io.js"></script>
         <script>
-            var socket = io();
+            const checkboxes = document.getElementById('checkboxes')
 
-            checkboxes = document.getElementById('checkboxes')
+            for (let i = 0; i < 8; i++) {
+                let newCheckbox = document.createElement('input')
+                newCheckbox.name = i
+                newCheckbox.type = 'checkbox'
+
+                checkboxes.appendChild(newCheckbox)
+            }
+
+            var socket = io();
 
             function changeBoard(location, state) {
                 console.log('Sending Data')
@@ -24,6 +31,18 @@
                 if (checkbox && checkbox.type == 'checkbox') {
                     checkbox.checked = state;
                 }
+            }
+
+            function string2Bin(str) {
+                return str.split(' ').map(char => {
+                    return char.charCodeAt(0).toString(2).padStart(8, '0')
+                }).join(' ')
+            }
+
+            function bin2String(bin) {
+                return bin.split(' ').map(bin => {
+                    return String.fromCharCode(parseInt(bin, 2))
+                }).join('')
             }
 
             checkboxes.addEventListener('change', function(event) {
@@ -39,6 +58,16 @@
                 let location = JSON.parse(msg).location
                 let state = JSON.parse(msg).state
                 updateBoard(location, state)
+            })
+
+            socket.on('board', (msg) => {
+                msgBin = string2Bin(msg)
+                console.log('Received:', msg, `(${msgBin})`)
+
+                for (let i = 0; i < msgBin.length; i++) {
+                    let state = ((msgBin[i] == '0') ? false : true)
+                    updateBoard(i, state)
+                }
             })
         </script>
     </body>
