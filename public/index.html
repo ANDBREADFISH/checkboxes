@@ -1,6 +1,23 @@
 <!DOCTYPE html>
 <html>
-   <head><title>Checkboxes</title></head>
+    <head>
+        <title>Checkboxes</title>
+
+        <style>
+            #checkboxes {
+                display: grid;
+                grid-template-columns: repeat(32, 1fr);
+                gap: 5px;
+
+                max-width: 0px;
+            }
+
+            #checkboxes input {
+                height: 17px;
+                width: 17px;
+            }
+        </style>
+    </head>
    <body>
         <h1>Checkboxes</h1>
         
@@ -10,18 +27,69 @@
         <script src="/socket.io/socket.io.js"></script>
         <script>
             const checkboxes = document.getElementById('checkboxes')
+            const totalBoxes = 8 * 128
 
-            for (let i = 0; i < 8; i++) {
+            let shift = false
+            let startBox = null
+
+            function shiftKeyDown(event) {
+                if (event.key === 'Shift') {
+                    shift = true
+                }
+            }
+
+            function shiftKeyUp(event) {
+                if (event.key === 'Shift') {
+                    shift = false
+                }
+            }
+
+            function id2Coord(id, width) {
+                row = Math.floor(id/width)
+                column = id % width
+                return {row, column}
+            }
+
+            function coord2Id(x, y, width) {
+                return x * width + y
+            }
+
+            function getIdsInRectangle(topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn, gridWidth) {
+                const ids = [];
+    
+                for (let row = topLeftRow; row <= bottomRightRow; row++) {
+                    for (let column = topLeftColumn; column <= bottomRightColumn; column++) {
+                        const id = row * gridWidth + column;
+                    ids.push(id);
+                    }
+                }
+    
+                return ids;
+            }
+
+            //ChatGPT <3
+
+            for (let i = 0; i < totalBoxes; i++) {
                 let newCheckbox = document.createElement('input')
                 newCheckbox.name = i
+                newCheckbox.id = i
                 newCheckbox.type = 'checkbox'
 
                 checkboxes.appendChild(newCheckbox)
+
+                document.getElementById(i).addEventListener('mouseover', (event) => {
+                    if (event.shiftKey) {
+                        event.target.checked = !event.target.checked
+                        changeBoard(event.target.name, event.target.checked)
+                    }
+                })
+
             }
 
             var socket = io();
 
             function changeBoard(location, state) {
+                console.log(`Board changed: ${location} => ${state}`)
                 console.log('Sending Data')
                 socket.emit('change', JSON.stringify({location: location, state: state}))
             }
@@ -34,7 +102,7 @@
             }
 
             function string2Bin(str) {
-                return str.split(' ').map(char => {
+                return str.split('').map(char => {
                     return char.charCodeAt(0).toString(2).padStart(8, '0')
                 }).join(' ')
             }
@@ -47,7 +115,6 @@
 
             checkboxes.addEventListener('change', function(event) {
                 if (event.target.type === 'checkbox') {
-                    console.log(`Board changed: ${event.target.name} => ${event.target.checked}`)
                     changeBoard(event.target.name, event.target.checked)
                 }
             })
@@ -61,7 +128,7 @@
             })
 
             socket.on('board', (msg) => {
-                msgBin = string2Bin(msg)
+                msgBin = string2Bin(msg).replaceAll(' ', '')
                 console.log('Received:', msg, `(${msgBin})`)
 
                 for (let i = 0; i < msgBin.length; i++) {

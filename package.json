@@ -1,6 +1,6 @@
 {
   "name": "checkboxes",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "checkboxes",
   "type": "commonjs",
   "dependencies": {
@@ -8,3 +8,4 @@
     "socket.io": "^4.7.5"
   }
 }
+
